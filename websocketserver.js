@@ -1,5 +1,5 @@
 const listenOnPort = 9999;
-console.log("Websocket server started on port: %d", listenOnPort);
+console.log("Websocket server started on port %d", listenOnPort);
 console.log("Websocket server will echo back requests in UPPERCASE");
 
 var WebSocketServer = require('ws').Server;
