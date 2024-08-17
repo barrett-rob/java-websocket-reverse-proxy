@@ -11,6 +11,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -25,8 +26,8 @@ public class NextHop {
     private final WebSocketSession webSocketClientSession;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public NextHop(WebSocketSession webSocketServerSession) {
-        webSocketClientSession = createWebSocketClientSession(webSocketServerSession);
+    public NextHop(WebSocketSession webSocketServerSession, WebSocketProxyClientHandler.ClientOfflineListener listener) {
+        webSocketClientSession = createWebSocketClientSession(webSocketServerSession, listener);
     }
 
     private WebSocketHttpHeaders getWebSocketHttpHeaders(final WebSocketSession userAgentSession) {
@@ -50,11 +51,11 @@ public class NextHop {
         return headers;
     }
 
-    private WebSocketSession createWebSocketClientSession(WebSocketSession webSocketServerSession) {
+    private WebSocketSession createWebSocketClientSession(WebSocketSession webSocketServerSession, WebSocketProxyClientHandler.ClientOfflineListener listener) {
         try {
             WebSocketHttpHeaders headers = getWebSocketHttpHeaders(webSocketServerSession);
             return new StandardWebSocketClient()
-                    .doHandshake(new WebSocketProxyClientHandler(webSocketServerSession), headers, new URI("ws://localhost:9999"))
+                    .doHandshake(new WebSocketProxyClientHandler(webSocketServerSession, listener), headers, new URI("ws://localhost:9999"))
                     .get(1000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -63,5 +64,12 @@ public class NextHop {
 
     public void sendMessageToNextHop(WebSocketMessage<?> webSocketMessage) throws IOException {
         webSocketClientSession.sendMessage(webSocketMessage);
+    }
+
+    /**
+     * Triggering client offline.
+     */
+    public void close() throws IOException {
+        webSocketClientSession.close();
     }
 }
